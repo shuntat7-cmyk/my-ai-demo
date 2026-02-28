@@ -1,8 +1,21 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { MessageCircle, FileCheck, CheckCircle2, Activity, Calendar, Building2, FileText, BarChart3, FileSpreadsheet } from "lucide-react";
+import { useState, useRef, useMemo } from "react";
+import { MessageCircle, FileCheck, CheckCircle2, Activity, Calendar, Building2, FileText, BarChart3, FileSpreadsheet, PieChart as PieChartIcon } from "lucide-react";
 import { parseExcelBuffer, type ActivityRow, type ImportResult } from "@/lib/parseExcel";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from "recharts";
 
 const DEFAULT_ACTIVITIES: ActivityRow[] = [
   { id: 1, date: "2025-03-01", client: "株式会社テックソリューション", action: "提案書送付", status: "提案済み" },
@@ -47,6 +60,8 @@ const CARD_CONFIG = [
   },
 ];
 
+const PIE_COLORS = ["#f59e0b", "#10b981", "#64748b"]; // amber, emerald, slate
+
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
     商談中: "bg-amber-100 text-amber-800 border-amber-200/80",
@@ -67,6 +82,28 @@ export default function Home() {
   const [summary, setSummary] = useState(DEFAULT_SUMMARY);
   const [importError, setImportError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // グラフ用: ステータス別（ドーナツ）
+  const pieData = useMemo(
+    () => [
+      { name: "商談中", value: summary.商談中, fill: PIE_COLORS[0] },
+      { name: "提案済み", value: summary.提案済み, fill: PIE_COLORS[1] },
+      { name: "完了", value: summary.完了, fill: PIE_COLORS[2] },
+    ].filter((d) => d.value > 0),
+    [summary]
+  );
+
+  // グラフ用: 月別アクティビティ数（棒）
+  const monthlyData = useMemo(() => {
+    const map = new Map<string, number>();
+    activities.forEach((a) => {
+      const month = a.date.slice(0, 7);
+      map.set(month, (map.get(month) ?? 0) + 1);
+    });
+    return Array.from(map.entries())
+      .map(([month, count]) => ({ month, 件数: count }))
+      .sort((a, b) => a.month.localeCompare(b.month));
+  }, [activities]);
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setImportError(null);
@@ -158,6 +195,71 @@ export default function Home() {
                 </div>
               );
             })}
+          </div>
+        </section>
+
+        {/* グラフ */}
+        <section className="mb-8 sm:mb-10">
+          <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 sm:mb-4 sm:text-sm">
+            <PieChartIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            視覚分析
+          </h2>
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* ステータス別 内訳（ドーナツ） */}
+            <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-6">
+              <h3 className="mb-4 text-sm font-semibold text-slate-700">進捗の内訳</h3>
+              {pieData.length === 0 ? (
+                <div className="flex h-[260px] items-center justify-center text-slate-400 text-sm">
+                  データがありません
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={90}
+                      paddingAngle={2}
+                      dataKey="value"
+                      nameKey="name"
+                      label={({ name, value }) => `${name} ${value}件`}
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [`${value ?? 0} 件`, "件数"]} />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+
+            {/* 月別 アクティビティ数（棒） */}
+            <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-6">
+              <h3 className="mb-4 text-sm font-semibold text-slate-700">月別アクティビティ</h3>
+              {monthlyData.length === 0 ? (
+                <div className="flex h-[260px] items-center justify-center text-slate-400 text-sm">
+                  データがありません
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart data={monthlyData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="#64748b" />
+                    <YAxis tick={{ fontSize: 12 }} stroke="#64748b" allowDecimals={false} />
+                    <Tooltip
+                      formatter={(value) => [value ?? 0, "件数"]}
+                      labelFormatter={(label) => `${label}`}
+                      contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0" }}
+                    />
+                    <Legend />
+                    <Bar dataKey="件数" fill="#6366f1" radius={[4, 4, 0, 0]} name="件数" />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
           </div>
         </section>
 
