@@ -1,11 +1,23 @@
 "use client";
 
-import { MessageCircle, FileCheck, CheckCircle2, Activity, Calendar, Building2, FileText, BarChart3 } from "lucide-react";
+import { useState, useRef } from "react";
+import { MessageCircle, FileCheck, CheckCircle2, Activity, Calendar, Building2, FileText, BarChart3, FileSpreadsheet } from "lucide-react";
+import { parseExcelBuffer, type ActivityRow, type ImportResult } from "@/lib/parseExcel";
 
-const progressCards = [
+const DEFAULT_ACTIVITIES: ActivityRow[] = [
+  { id: 1, date: "2025-03-01", client: "株式会社テックソリューション", action: "提案書送付", status: "提案済み" },
+  { id: 2, date: "2025-02-28", client: "グローバル商事株式会社", action: "初回ヒアリング実施", status: "商談中" },
+  { id: 3, date: "2025-02-27", client: "株式会社イノベート", action: "導入完了・キックオフ", status: "完了" },
+  { id: 4, date: "2025-02-26", client: "サンプル電機株式会社", action: "デモ実施", status: "商談中" },
+  { id: 5, date: "2025-02-25", client: "未来システム株式会社", action: "見積もり提出", status: "提案済み" },
+];
+
+const DEFAULT_SUMMARY = { 商談中: 2, 提案済み: 2, 完了: 1 };
+
+const CARD_CONFIG = [
   {
     title: "商談中",
-    value: "12",
+    key: "商談中" as const,
     unit: "件",
     description: "現在進行中の商談",
     trend: "+2今月",
@@ -15,7 +27,7 @@ const progressCards = [
   },
   {
     title: "提案済み",
-    value: "8",
+    key: "提案済み" as const,
     unit: "件",
     description: "提案書送付済み",
     trend: "先月比+1",
@@ -25,7 +37,7 @@ const progressCards = [
   },
   {
     title: "導入完了",
-    value: "24",
+    key: "完了" as const,
     unit: "件",
     description: "本年度の実績",
     trend: "目標の80%",
@@ -33,14 +45,6 @@ const progressCards = [
     accent: "text-slate-700",
     Icon: CheckCircle2,
   },
-];
-
-const activities = [
-  { id: 1, date: "2025-03-01", client: "株式会社テックソリューション", action: "提案書送付", status: "提案済み" },
-  { id: 2, date: "2025-02-28", client: "グローバル商事株式会社", action: "初回ヒアリング実施", status: "商談中" },
-  { id: 3, date: "2025-02-27", client: "株式会社イノベート", action: "導入完了・キックオフ", status: "完了" },
-  { id: 4, date: "2025-02-26", client: "サンプル電機株式会社", action: "デモ実施", status: "商談中" },
-  { id: 5, date: "2025-02-25", client: "未来システム株式会社", action: "見積もり提出", status: "提案済み" },
 ];
 
 function StatusBadge({ status }: { status: string }) {
@@ -59,16 +63,68 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function Home() {
+  const [activities, setActivities] = useState<ActivityRow[]>(DEFAULT_ACTIVITIES);
+  const [summary, setSummary] = useState(DEFAULT_SUMMARY);
+  const [importError, setImportError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setImportError(null);
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const name = file.name.toLowerCase();
+    if (!name.endsWith(".xlsx") && !name.endsWith(".xls")) {
+      setImportError("Excel ファイル（.xlsx / .xls）を選択してください。");
+      return;
+    }
+    try {
+      const buffer = await file.arrayBuffer();
+      const result: ImportResult = parseExcelBuffer(buffer);
+      setActivities(result.activities);
+      setSummary(result.summary);
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : "インポートに失敗しました。");
+    }
+    e.target.value = "";
+  };
+
   return (
     <div className="min-h-screen">
       <header className="sticky top-[calc(3.5rem+env(safe-area-inset-top,0px))] z-[5] border-b border-slate-200/80 bg-white/95 backdrop-blur-md md:top-0">
         <div className="px-4 py-4 sm:px-6 sm:py-5 md:px-8 md:py-6">
-          <h1 className="text-xl font-semibold tracking-tight text-slate-800 sm:text-2xl">
-            ダッシュボード
-          </h1>
-          <p className="mt-0.5 text-sm text-slate-500 sm:mt-1">
-            AI導入支援の商談状況を一覧で確認できます
-          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-xl font-semibold tracking-tight text-slate-800 sm:text-2xl">
+                ダッシュボード
+              </h1>
+              <p className="mt-0.5 text-sm text-slate-500 sm:mt-1">
+                AI導入支援の商談状況を一覧で確認できます
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleImport}
+                className="hidden"
+                aria-label="Excelを選択"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200/80 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
+              >
+                <FileSpreadsheet className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+                Excelをインポート
+              </button>
+              {importError && (
+                <p className="text-xs text-red-600" role="alert">
+                  {importError}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       </header>
 
@@ -79,8 +135,9 @@ export default function Home() {
             現在のAI導入進捗
           </h2>
           <div className="grid gap-4 sm:gap-6 sm:grid-cols-3">
-            {progressCards.map((card) => {
+            {CARD_CONFIG.map((card) => {
               const CardIcon = card.Icon;
+              const value = String(summary[card.key]);
               return (
                 <div
                   key={card.title}
@@ -92,7 +149,7 @@ export default function Home() {
                   </div>
                   <p className="mt-2 flex items-baseline gap-1">
                     <span className={`text-2xl font-semibold tabular-nums sm:text-3xl ${card.accent}`}>
-                      {card.value}
+                      {value}
                     </span>
                     <span className="text-slate-500">{card.unit}</span>
                   </p>
@@ -136,19 +193,27 @@ export default function Home() {
                   </tr>
                 </thead>
                 <tbody>
-                  {activities.map((row) => (
-                    <tr
-                      key={row.id}
-                      className="border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50/50"
-                    >
-                      <td className="whitespace-nowrap px-3 py-3 text-slate-600 sm:px-6 sm:py-4">{row.date}</td>
-                      <td className="min-w-[140px] px-3 py-3 font-medium text-slate-800 sm:min-w-0 sm:px-6 sm:py-4">{row.client}</td>
-                      <td className="px-3 py-3 text-slate-600 sm:px-6 sm:py-4">{row.action}</td>
-                      <td className="whitespace-nowrap px-3 py-3 sm:px-6 sm:py-4">
-                        <StatusBadge status={row.status} />
+                  {activities.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-8 text-center text-slate-500">
+                        データがありません。Excel をインポートしてください。
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    activities.map((row) => (
+                      <tr
+                        key={row.id}
+                        className="border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50/50"
+                      >
+                        <td className="whitespace-nowrap px-3 py-3 text-slate-600 sm:px-6 sm:py-4">{row.date}</td>
+                        <td className="min-w-[140px] px-3 py-3 font-medium text-slate-800 sm:min-w-0 sm:px-6 sm:py-4">{row.client}</td>
+                        <td className="px-3 py-3 text-slate-600 sm:px-6 sm:py-4">{row.action}</td>
+                        <td className="whitespace-nowrap px-3 py-3 sm:px-6 sm:py-4">
+                          <StatusBadge status={row.status} />
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
