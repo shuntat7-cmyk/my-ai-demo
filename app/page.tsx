@@ -61,37 +61,37 @@ function StatusBadge({ status }: { status: string }) {
 export default function Home() {
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-[5] border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
-        <div className="px-8 py-6">
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-800">
+      <header className="sticky top-[calc(3.5rem+env(safe-area-inset-top,0px))] z-[5] border-b border-slate-200/80 bg-white/95 backdrop-blur-md md:top-0">
+        <div className="px-4 py-4 sm:px-6 sm:py-5 md:px-8 md:py-6">
+          <h1 className="text-xl font-semibold tracking-tight text-slate-800 sm:text-2xl">
             ダッシュボード
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-0.5 text-sm text-slate-500 sm:mt-1">
             AI導入支援の商談状況を一覧で確認できます
           </p>
         </div>
       </header>
 
-      <div className="p-8">
-        <section className="mb-10">
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-slate-500">
-            <BarChart3 className="h-4 w-4" />
+      <div className="p-4 sm:p-6 md:p-8">
+        <section className="mb-8 sm:mb-10">
+          <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 sm:mb-4 sm:text-sm">
+            <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             現在のAI導入進捗
           </h2>
-          <div className="grid gap-6 sm:grid-cols-3">
+          <div className="grid gap-4 sm:gap-6 sm:grid-cols-3">
             {progressCards.map((card) => {
               const CardIcon = card.Icon;
               return (
                 <div
                   key={card.title}
-                  className={`rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-md ${card.color}`}
+                  className={`rounded-xl border bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:p-6 ${card.color}`}
                 >
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium text-slate-500">{card.title}</p>
-                    <CardIcon className={`h-5 w-5 ${card.accent}`} strokeWidth={1.5} />
+                    <CardIcon className={`h-5 w-5 shrink-0 ${card.accent}`} strokeWidth={1.5} />
                   </div>
                   <p className="mt-2 flex items-baseline gap-1">
-                    <span className={`text-3xl font-semibold tabular-nums ${card.accent}`}>
+                    <span className={`text-2xl font-semibold tabular-nums sm:text-3xl ${card.accent}`}>
                       {card.value}
                     </span>
                     <span className="text-slate-500">{card.unit}</span>
@@ -105,34 +105,34 @@ export default function Home() {
         </section>
 
         <section>
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-slate-500">
-            <Activity className="h-4 w-4" />
+          <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 sm:mb-4 sm:text-sm">
+            <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             最新のアクティビティ
           </h2>
           <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] text-left text-sm">
+            <div className="overflow-x-auto [-webkit-overflow-scrolling:touch]">
+              <table className="w-full min-w-[600px] text-left text-sm">
                 <thead>
                   <tr className="border-b border-slate-200/80 bg-slate-50/80">
-                    <th className="px-6 py-4 font-semibold text-slate-700">
-                      <span className="inline-flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
+                    <th className="px-3 py-3 font-semibold text-slate-700 sm:px-6 sm:py-4">
+                      <span className="inline-flex items-center gap-1.5 sm:gap-2">
+                        <Calendar className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
                         日付
                       </span>
                     </th>
-                    <th className="px-6 py-4 font-semibold text-slate-700">
-                      <span className="inline-flex items-center gap-2">
-                        <Building2 className="h-4 w-4" />
+                    <th className="px-3 py-3 font-semibold text-slate-700 sm:px-6 sm:py-4">
+                      <span className="inline-flex items-center gap-1.5 sm:gap-2">
+                        <Building2 className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
                         クライアント
                       </span>
                     </th>
-                    <th className="px-6 py-4 font-semibold text-slate-700">
-                      <span className="inline-flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
+                    <th className="px-3 py-3 font-semibold text-slate-700 sm:px-6 sm:py-4">
+                      <span className="inline-flex items-center gap-1.5 sm:gap-2">
+                        <FileText className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
                         アクティビティ
                       </span>
                     </th>
-                    <th className="px-6 py-4 font-semibold text-slate-700">ステータス</th>
+                    <th className="px-3 py-3 font-semibold text-slate-700 sm:px-6 sm:py-4">ステータス</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -141,10 +141,10 @@ export default function Home() {
                       key={row.id}
                       className="border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50/50"
                     >
-                      <td className="px-6 py-4 text-slate-600">{row.date}</td>
-                      <td className="px-6 py-4 font-medium text-slate-800">{row.client}</td>
-                      <td className="px-6 py-4 text-slate-600">{row.action}</td>
-                      <td className="px-6 py-4">
+                      <td className="whitespace-nowrap px-3 py-3 text-slate-600 sm:px-6 sm:py-4">{row.date}</td>
+                      <td className="min-w-[140px] px-3 py-3 font-medium text-slate-800 sm:min-w-0 sm:px-6 sm:py-4">{row.client}</td>
+                      <td className="px-3 py-3 text-slate-600 sm:px-6 sm:py-4">{row.action}</td>
+                      <td className="whitespace-nowrap px-3 py-3 sm:px-6 sm:py-4">
                         <StatusBadge status={row.status} />
                       </td>
                     </tr>
